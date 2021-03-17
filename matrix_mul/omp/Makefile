@@ -23,5 +23,5 @@ clean:
 	rm -f $(PROJ) $(OBJS) *.xml
 
 test:
-	./matrix_mul -i matrix_mul_02.dat
+	./matrix_mul -i ../matrix_mul_03.dat -o
 	cat omp_results.xml
