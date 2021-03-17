@@ -56,11 +56,11 @@ namespace omp
     block_size = 4;
     block_upperbound = (sq_dimension / block_size) * block_size;
 #pragma omp parallel for private(ii, jj, kk, i, j, k)
-    for(i = 0; i < block_upperbound; i += block_size)
+    for(i = 0; i < sq_dimension; i += block_size)
     {
-      for(j = 0; j < block_upperbound; j += block_size)
+      for(j = 0; j < sq_dimension; j += block_size)
       {
-          for(k = 0; k < block_upperbound; k += block_size)
+          for(k = 0; k < sq_dimension; k += block_size)
           {
               for(ii = i; ii < min(sq_dimension, i + block_size); ++ii)
               {
