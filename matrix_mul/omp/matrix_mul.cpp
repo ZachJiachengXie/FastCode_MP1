@@ -49,6 +49,35 @@ namespace omp
   
   }
   void
+  matrix_multiplication(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
+  {
+    unsigned int block_size, block_upperbound, ii, jj, kk, i, j, k;
+    memset(sq_matrix_result, 0, sizeof(float) * sq_dimension * sq_dimension);
+    block_size = 4;
+    block_upperbound = (sq_dimension / block_size) * block_size;
+#pragma omp parallel for private(ii, jj, kk, i, j, k)
+    for(i = 0; i < block_upperbound; i += block_size)
+    {
+      for(j = 0; j < block_upperbound; j += block_size)
+      {
+          for(k = 0; k < block_upperbound; k += block_size)
+          {
+              for(ii = i; ii < min(sq_dimension, i + block_size); ++ii)
+              {
+                  for(jj = j; jj < min(sq_dimension, j + block_size); ++jj)
+                  {
+                      for(kk = k; kk < min(sq_dimension, k + block_size); ++kk)
+                      {
+                        sq_matrix_result[ii * sq_dimension + jj] += sq_matrix_1[ii * sq_dimension + kk] * sq_matrix_2[kk * sq_dimension + jj];
+                      } 
+                  }
+              }               
+          }
+      }
+    }// End of parallel region
+  }
+
+  void
   matrix_multiplication_block(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
   {
     unsigned int block_size, block_upperbound, ii, jj, kk, i, j, k;
@@ -67,7 +96,7 @@ namespace omp
                   for(j=jj; j < min(sq_dimension, jj + block_size); ++j)
                   {
                       register unsigned int sum = 0;
-                      for( k=kk; k<min(sq_dimension, kk + block_size); ++k)
+                      for(k=kk; k<min(sq_dimension, kk + block_size); ++k)
                       {
                         sum += sq_matrix_1[i * sq_dimension + k] * sq_matrix_2[k * sq_dimension + j];
                       } 
