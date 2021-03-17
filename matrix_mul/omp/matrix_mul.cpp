@@ -32,7 +32,7 @@ namespace omp
   }
 
     void
-  matrix_multiplication(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
+  matrix_multiplication_kij(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
   {
     memset(sq_matrix_result, 0, sizeof(float) * sq_dimension * sq_dimension);
     float temp;
@@ -51,23 +51,23 @@ namespace omp
   void
   matrix_multiplication_block(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
   {
-    unsigned int block_size;
+    unsigned int block_size, block_upperbound, ii, jj, kk, i, j, k;
     memset(sq_matrix_result, 0, sizeof(float) * sq_dimension * sq_dimension);
     block_size = 4;
-#pragma omp parallel for
-
-    for(int ii = 0; ii < sq_dimension; ii += block_size)
+    block_upperbound = (sq_dimension / block_size) * block_size;
+#pragma omp parallel for private(ii, jj, kk, i, j, k)
+    for(ii = 0; ii < block_upperbound; ii += block_size)
     {
-      for(int jj = 0; jj < sq_dimension; jj += block_size)
+      for(jj = 0; jj < block_upperbound; jj += block_size)
       {
-          for(int kk = 0; kk < sq_dimension; kk += block_size)
+          for(kk = 0; kk < block_upperbound; kk += block_size)
           {
-              for(int i=ii; i < ii + block_size; ++i)
+              for(i=ii; i < min(sq_dimension, ii + block_size); ++i)
               {
-                  for(int j=jj; j < jj + block_size; ++j)
+                  for(j=jj; j < min(sq_dimension, jj + block_size); ++j)
                   {
                       register unsigned int sum = 0;
-                      for(int k=kk; k<kk+block_size; ++k)
+                      for( k=kk; k<min(sq_dimension, kk + block_size); ++k)
                       {
                         sum += sq_matrix_1[i * sq_dimension + k] * sq_matrix_2[k * sq_dimension + j];
                       } 
