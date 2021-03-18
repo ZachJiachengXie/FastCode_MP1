@@ -31,6 +31,20 @@ namespace omp
     return B;
   }
 
+  void
+  matrix_transpose_copy(float *src_mat, float *des_mat,  unsigned int sq_dimension )
+  {
+    #pragma omp parallel for
+    for (unsigned int i = 0; i < sq_dimension; i++) 
+    {
+      for(unsigned int j = 0; j < sq_dimension; j++) 
+        {       
+          des_mat[i * sq_dimension + j] = src_mat[ j * sq_dimension +i];
+        }
+    }// End of parallel region
+  }
+
+ /*
     void
   matrix_multiplication_kij(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
   {
@@ -48,14 +62,15 @@ namespace omp
       }// End of parallel region
   
   }
+  */
   void
-  matrix_multiplication(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
+  matrix_multiplication_b16(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
   {
-    unsigned int block_size, ii, jj, kk, i, j, k, mul;
+    unsigned int block_size, ii, jj, kk, i, j, k;
     // Initialize result matrix to be all 0's
     memset(sq_matrix_result, 0, sizeof(float) * sq_dimension * sq_dimension);
     block_size = 16;
-#pragma omp parallel for private(ii, jj, kk, i, j, k, mul)
+#pragma omp parallel for private(ii, jj, kk, i, j, k)
     for(i = 0; i < sq_dimension; i += block_size)
     {
       for(j = 0; j < sq_dimension; j += block_size)
@@ -64,12 +79,11 @@ namespace omp
           {
               for(ii = i; ii < min(sq_dimension, i + block_size); ++ii)
               {
-                mul = ii * sq_dimension;
                 for(jj = j; jj < min(sq_dimension, j + block_size); ++jj)
                 {
                     for(kk = k; kk < min(sq_dimension, k + block_size); ++kk)
                     {
-                      sq_matrix_result[mul + jj] += sq_matrix_1[mul + kk] * sq_matrix_2[kk * sq_dimension + jj];
+                      sq_matrix_result[ii * sq_dimension + jj] += sq_matrix_1[ii * sq_dimension + kk] * sq_matrix_2[kk * sq_dimension + jj];
                     }
                 }
               }               
@@ -77,6 +91,37 @@ namespace omp
       }
     }// End of parallel region
   }
+    void
+  matrix_multiplication(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
+  {
+    unsigned int block_size, ii, jj, kk, i, j, k;
+    float sq_matrix_2_trans[sq_dimension * sq_dimension];
+    matrix_transpose_copy(sq_matrix_2, sq_matrix_2_trans, sq_dimension);
+    // Initialize result matrix to be all 0's
+    memset(sq_matrix_result, 0, sizeof(float) * sq_dimension * sq_dimension);
+    block_size = 16;
+    #pragma omp parallel for private(ii, jj, kk, i, j, k)
+    for(i = 0; i < sq_dimension; i += block_size)
+    {
+      for(j = 0; j < sq_dimension; j += block_size)
+      {
+          for(k = 0; k < sq_dimension; k += block_size)
+          {
+              for(ii = i; ii < min(sq_dimension, i + block_size); ++ii)
+              {
+                for(jj = j; jj < min(sq_dimension, j + block_size); ++jj)
+                {
+                    for(kk = k; kk < min(sq_dimension, k + block_size); ++kk)
+                    {
+                      sq_matrix_result[ii * sq_dimension + jj] += sq_matrix_1[ii * sq_dimension + kk] * sq_matrix_2[jj * sq_dimension + kk];
+                    }
+                }
+              }               
+          }
+      }
+    }// End of parallel region
+  }
+ 
   void
   matrix_multiplication_baseline(float *sq_matrix_1, float *sq_matrix_2, float *sq_matrix_result, unsigned int sq_dimension )
   {
